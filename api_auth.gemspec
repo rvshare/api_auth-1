@@ -23,6 +23,7 @@ Gem::Specification.new do |s|
   faraday_version = RUBY_VERSION == '1.8.7' ? '< 0.10' : '>= 0.10'
   s.add_development_dependency 'faraday', faraday_version
   s.add_development_dependency 'multipart-post', '~> 2.0'
+  s.add_development_dependency 'pry'
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
