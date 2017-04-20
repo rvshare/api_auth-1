@@ -36,7 +36,7 @@ module ApiAuth
       options = { :override_http_method => nil }.merge(options)
 
       headers = Headers.new(request)
-      if ENV['API_AUTH_DEBUG_MODE'].true?
+      if ENV['API_AUTH_DEBUG_MODE'] === 'true'
         binding.pry
       end
       if headers.md5_mismatch?
@@ -85,7 +85,7 @@ module ApiAuth
     def signatures_match?(headers, secret_key, options)
       match_data = parse_auth_header(headers.authorization_header)
 
-      if ENV['API_AUTH_DEBUG_MODE'].true?
+      if ENV['API_AUTH_DEBUG_MODE'] === 'true'
         binding.pry
       end
 
