@@ -1,4 +1,3 @@
-# encoding: UTF-8
 # api-auth is a Ruby gem designed to be used both in your client and server
 # HTTP-based applications. It implements the same authentication methods (HMAC)
 # used by Amazon Web Services.
@@ -21,7 +20,7 @@ module ApiAuth
     #
     # secret_key: assigned secret key that is known to both parties
     def sign!(request, access_id, secret_key, options = {})
-      options = { :override_http_method => nil, :digest => 'sha1' }.merge(options)
+      options = { override_http_method: nil, digest: 'sha1' }.merge(options)
       headers = Headers.new(request)
       headers.calculate_md5
       headers.set_date
@@ -33,15 +32,18 @@ module ApiAuth
     def authentic?(request, secret_key, options = {})
       return false if secret_key.nil?
 
-      options = { :override_http_method => nil }.merge(options)
+      options = { override_http_method: nil }.merge(options)
 
       headers = Headers.new(request)
+
+      # 900 seconds is 15 minutes
+      clock_skew = options.fetch(:clock_skew, 900)
 
       if headers.md5_mismatch?
         false
       elsif !signatures_match?(headers, secret_key, options)
         false
-      elsif !request_within_time_window?(headers)
+      elsif !request_within_time_window?(headers, clock_skew)
         false
       else
         true
@@ -71,11 +73,9 @@ module ApiAuth
 
     AUTH_HEADER_PATTERN = /APIAuth(?:-HMAC-(MD5|SHA(?:1|224|256|384|512)?))? ([^:]+):(.+)$/
 
-    def request_within_time_window?(headers)
-      # 900 seconds is 15 minutes
-
-      Time.httpdate(headers.timestamp).utc > (Time.now.utc - 900) &&
-        Time.httpdate(headers.timestamp).utc < (Time.now.utc + 900)
+    def request_within_time_window?(headers, clock_skew)
+      Time.httpdate(headers.timestamp).utc > (Time.now.utc - clock_skew) &&
+        Time.httpdate(headers.timestamp).utc < (Time.now.utc + clock_skew)
     rescue ArgumentError
       false
     end
@@ -87,7 +87,7 @@ module ApiAuth
       digest = match_data[1].nil? ? 'SHA1' : match_data[1].upcase
       raise InvalidRequestDigest if !options[:digest].nil? && !options[:digest].casecmp(digest).zero?
 
-      options = { :digest => digest }.merge(options)
+      options = { digest: digest }.merge(options)
 
       header_sig = match_data[3]
       calculated_sig = hmac_signature(headers, secret_key, options)
